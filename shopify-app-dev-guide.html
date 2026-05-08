@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shopify App Dev — Beginner's Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3d;
+    --green: #00e5a0;
+    --green-dim: rgba(0,229,160,0.12);
+    --green-glow: rgba(0,229,160,0.25);
+    --purple: #9b7fff;
+    --orange: #ff7c3a;
+    --blue: #3ab8ff;
+    --text: #e8e8f0;
+    --muted: #7a7a9a;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* animated bg grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .badge {
+    display: inline-block;
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+    margin-bottom: 14px;
+  }
+
+  h1 span { color: var(--green); }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* PROGRESS BAR */
+  .progress-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .progress-label span:last-child { color: var(--green); }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--blue));
+    border-radius: 100px;
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+
+  /* SECTION NAV TABS */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s 0.15s ease both;
+  }
+
+  .tab {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .tab:hover { border-color: var(--green); color: var(--green); }
+  .tab.active {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* SECTION */
+  .section {
+    display: none;
+    animation: fadeUp 0.4s ease both;
+  }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent, var(--green));
+    border-radius: 3px 0 0 3px;
+  }
+
+  .card:hover {
+    border-color: var(--accent, var(--green));
+    transform: translateX(3px);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .card-num {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .card-body {
+    font-size: 13px;
+    line-height: 1.8;
+    color: #b0b0c8;
+  }
+
+  .card-body strong { color: var(--text); }
+
+  /* CONCEPT GRID */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .concept-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s ease;
+  }
+
+  .concept-card:hover {
+    border-color: var(--c, var(--green));
+    box-shadow: 0 0 20px var(--glow, var(--green-glow));
+  }
+
+  .concept-icon { font-size: 26px; margin-bottom: 10px; }
+  .concept-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--c, var(--green));
+    margin-bottom: 6px;
+  }
+  .concept-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    color: #a0e0c0;
+    overflow-x: auto;
+    margin: 16px 0;
+    position: relative;
+  }
+
+  .code-block .comment { color: var(--muted); }
+  .code-block .keyword { color: var(--purple); }
+  .code-block .string { color: var(--orange); }
+  .code-block .fn { color: var(--blue); }
+
+  /* ROADMAP STEPS */
+  .roadmap {
+    position: relative;
+    padding-left: 36px;
+  }
+
+  .roadmap::before {
+    content: '';
+    position: absolute;
+    left: 13px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--green), var(--purple), transparent);
+  }
+
+  .roadmap-step {
+    position: relative;
+    margin-bottom: 28px;
+    cursor: pointer;
+  }
+
+  .roadmap-step::before {
+    content: attr(data-num);
+    position: absolute;
+    left: -36px;
+    top: 2px;
+    width: 26px; height: 26px;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.2s ease;
+    line-height: 22px;
+    text-align: center;
+  }
+
+  .roadmap-step.done::before {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+    content: '✓';
+  }
+
+  .roadmap-step:hover::before {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .step-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .step-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .step-time {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 11px;
+    background: var(--surface2);
+    color: var(--orange);
+    border: 1px solid rgba(255,124,58,0.3);
+    padding: 2px 10px;
+    border-radius: 100px;
+  }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: #b0b0c8;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li:hover { color: var(--text); }
+
+  .check-box {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    transition: all 0.2s;
+  }
+
+  .checklist li.checked .check-box {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .checklist li.checked { text-decoration: line-through; color: var(--muted); }
+
+  /* GLOSSARY */
+  .glossary-item {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+  }
+  .glossary-item:last-child { border-bottom: none; }
+
+  .g-term {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .g-term::after { content: '▾'; font-size: 10px; color: var(--muted); }
+  .g-term.open::after { content: '▴'; color: var(--green); }
+
+  .g-def {
+    font-size: 12px;
+    color: #b0b0c8;
+    line-height: 1.7;
+    display: none;
+    padding-top: 6px;
+  }
+  .g-def.open { display: block; }
+
+  /* SECTION HEADER */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .section-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  /* HIGHLIGHT BOX */
+  .highlight {
+    background: var(--green-dim);
+    border: 1px solid rgba(0,229,160,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #a0e8d0;
+    line-height: 1.7;
+    margin: 16px 0;
+  }
+  .highlight strong { color: var(--green); }
+
+  /* TAG */
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-weight: 500;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .tag-easy { background: rgba(0,229,160,0.15); color: var(--green); }
+  .tag-med { background: rgba(255,124,58,0.15); color: var(--orange); }
+  .tag-hard { background: rgba(155,127,255,0.15); color: var(--purple); }
+
+  /* ANIMATIONS */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 60px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="badge">🛒 Beginner's Guide</div>
+    <h1>Shopify <span>App Dev</span><br>From Zero</h1>
+    <p class="subtitle">You know HTML & CSS — that's your launchpad. This guide walks you from "what even is a Shopify app?" to your first working app.</p>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Your Learning Progress</span>
+      <span id="progress-text">0 / 7 topics done</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showSection('overview')">🗺 Overview</button>
+    <button class="tab" onclick="showSection('concepts')">🧠 Core Concepts</button>
+    <button class="tab" onclick="showSection('tools')">🛠 Tools & Stack</button>
+    <button class="tab" onclick="showSection('roadmap')">🚀 Roadmap</button>
+    <button class="tab" onclick="showSection('checklist')">✅ First App Checklist</button>
+    <button class="tab" onclick="showSection('code')">💻 First Code</button>
+    <button class="tab" onclick="showSection('glossary')">📖 Glossary</button>
+  </div>
+
+  <!-- SECTION: OVERVIEW -->
+  <div class="section active" id="section-overview">
+    <div class="section-title">What is a Shopify App?</div>
+    <p class="section-sub">Think of Shopify like a smartphone OS. The App Store is where developers publish apps that add features to merchants' stores.</p>
+
+    <div class="card" style="--accent: var(--green)">
+      <div class="card-header">
+        <div class="icon" style="background:rgba(0,229,160,0.12); font-size:22px;">🏪</div>
+        <div>
+          <div class="card-title">Shopify = a platform for online stores</div>
+          <div class="card-num">The foundation</div>
+        </div>
+      </div>
+      <div class="card-body">
+        Shopify lets anyone create an online store without coding. But merchants often need <strong>extra features</strong> — email popups, loyalty programs, shipping tools, custom widgets. That's where <strong>apps</strong> come in. You build those apps.
+      </div>
+    </div>
+
+    <div class="card" style="--accent: var(--purple)">
+      <div class="card-header">
+        <div class="icon" style="background:rgba(155,127,255,0.12); font-size:22px;">🔌</div>
+        <div>
+          <div class="card-title">Two types of apps</div>
+          <div class="card-num">Public vs Private</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <strong>Public apps</strong> — listed in the Shopify App Store. Any merchant can install them. Great for generating income.<br><br>
+        <strong>Custom/Private apps</strong> — built for one specific store. Good for freelance work or your own store.
+      </div>
+    </div>
+
+    <div class="card" style="--accent: var(--orange)">
+      <div class="card-header">
+        <div class="icon" style="background:rgba(255,124,58,0.12); font-size:22px;">⚙️</div>
+        <div>
+          <div class="card-title">What apps actually do</div>
+          <div class="card-num">Under the hood</div>
+        </div>
+      </div>
+      <div class="card-body">
+        Apps talk to Shopify using an <strong>API</strong> (a way for software to communicate). Your app can read/write store data — products, orders, customers — and add a UI panel inside the Shopify admin dashboard.
+      </div>
+    </div>
+
+    <div class="highlight">
+      <strong>Your path as a beginner:</strong> HTML/CSS you know → learn JavaScript → learn Node.js (JavaScript for servers) → learn React (optional but common) → learn Shopify's API & toolkit. You're closer than you think!
+    </div>
+  </div>
+
+  <!-- SECTION: CONCEPTS -->
+  <div class="section" id="section-concepts">
+    <div class="section-title">Core Concepts to Understand</div>
+    <p class="section-sub">These are the building blocks. Don't worry about memorising them — just get a feel for each one.</p>
+
+    <div class="concept-grid">
+      <div class="concept-card" style="--c:var(--green);--glow:rgba(0,229,160,0.2)">
+        <div class="concept-icon">🔑</div>
+        <div class="concept-name">OAuth</div>
+        <div class="concept-desc">How a merchant gives your app permission to access their store. Like "Login with Google" but for Shopify stores.</div>
+      </div>
+      <div class="concept-card" style="--c:var(--blue);--glow:rgba(58,184,255,0.2)">
+        <div class="concept-icon">🌐</div>
+        <div class="concept-name">REST & GraphQL API</div>
+        <div class="concept-desc">Two ways to request data from Shopify. Think of them as two different menu formats at a restaurant.</div>
+      </div>
+      <div class="concept-card" style="--c:var(--purple);--glow:rgba(155,127,255,0.2)">
+        <div class="concept-icon">📣</div>
+        <div class="concept-name">Webhooks</div>
+        <div class="concept-desc">Shopify sends your app a notification when something happens — like a new order. Your app listens and reacts.</div>
+      </div>
+      <div class="concept-card" style="--c:var(--orange);--glow:rgba(255,124,58,0.2)">
+        <div class="concept-icon">🖼️</div>
+        <div class="concept-name">Embedded App</div>
+        <div class="concept-desc">Your app's UI lives inside the Shopify admin dashboard. Shopify provides a toolkit called App Bridge for this.</div>
+      </div>
+      <div class="concept-card" style="--c:var(--green);--glow:rgba(0,229,160,0.2)">
+        <div class="concept-icon">🏪</div>
+        <div class="concept-name">Theme Extensions</div>
+        <div class="concept-desc">Adds UI blocks directly to the storefront (what shoppers see). Built with Liquid — Shopify's template language.</div>
+      </div>
+      <div class="concept-card" style="--c:var(--blue);--glow:rgba(58,184,255,0.2)">
+        <div class="concept-icon">🔐</div>
+        <div class="concept-name">Access Scopes</div>
+        <div class="concept-desc">When your app installs, you request only the permissions you need — like read_orders or write_products.</div>
+      </div>
+    </div>
+
+    <div class="highlight">
+      <strong>Don't panic!</strong> You won't learn all of this at once. The Shopify CLI (a command-line tool) and starter templates do most of the heavy lifting for you while you're learning.
+    </div>
+  </div>
+
+  <!-- SECTION: TOOLS -->
+  <div class="section" id="section-tools">
+    <div class="section-title">Your Tool Belt</div>
+    <p class="section-sub">Here's exactly what you'll use to build Shopify apps — from your laptop to production.</p>
+
+    <div class="card" style="--accent: var(--green)">
+      <div class="card-header">
+        <div class="icon" style="background:rgba(0,229,160,0.12)">🧰</div>
+        <div>
+          <div class="card-title">Shopify CLI <span class="tag tag-easy">Start here</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        A command-line tool that scaffolds your entire app in seconds. One command creates a working app template with auth, routing, and API calls already wired up.<br>
+        <div class="code-block"><span class="comment"># Install and create your first app</span>
+npm install -g @shopify/cli
+shopify app init</div>
+      </div>
+    </div>
+
+    <div class="card" style="--accent: var(--blue)">
+      <div class="card-header">
+        <div class="icon" style="background:rgba(58,184,255,0.12)">⚛️</div>
+        <div>
+          <div class="card-title">Node.js + React <span class="tag tag-med">Learn next</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <strong>Node.js</strong> — runs JavaScript on a server (your app's backend). Handles OAuth, API calls, webhooks.<br><br>
+        <strong>React</strong> — builds the UI your merchant sees. You already know HTML — React is like HTML with superpowers and live updates.
+      </div>
+    </div>
+
+    <div class="card" style="--accent: var(--purple)">
+      <div class="card-header">
+        <div class="icon" style="background:rgba(155,127,255,0.12)">💜</div>
+        <div>
+          <div class="card-title">Polaris — Shopify's UI Kit <span class="tag tag-easy">Free to use</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        Shopify provides a ready-made component library called <strong>Polaris</strong>. Pre-built buttons, tables, forms, modals that match Shopify's design system. You don't have to style your admin app from scratch!
+        <div class="code-block"><span class="keyword">import</span> { Button, Card, Page } <span class="keyword">from</span> <span class="string">'@shopify/polaris'</span>;
+
+<span class="fn">export default function</span> MyPage() {
+  <span class="keyword">return</span> (
+    &lt;Page title=<span class="string">"My App"</span>&gt;
+      &lt;Card&gt;Hello Shopify!&lt;/Card&gt;
+    &lt;/Page&gt;
+  );
+}</div>
+      </div>
+    </div>
+
+    <div class="card" style="--accent: var(--orange)">
+      <div class="card-header">
+        <div class="icon" style="background:rgba(255,124,58,0.12)">🌍</div>
+        <div>
+          <div class="card-title">Deployment — Render / Fly.io / Vercel <span class="tag tag-med">When ready</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        Your app needs to be hosted on the internet so Shopify stores can connect to it. These platforms make that easy and have free tiers for getting started.
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: ROADMAP -->
+  <div class="section" id="section-roadmap">
+    <div class="section-title">Your Learning Roadmap</div>
+    <p class="section-sub">Click steps to mark them done. Realistic timeline: 3–6 months of consistent learning to build your first real app.</p>
+
+    <div class="roadmap" id="roadmap">
+      <div class="roadmap-step" data-num="1" onclick="toggleStep(this)">
+        <div class="step-title">Master JavaScript basics</div>
+        <div class="step-desc">Variables, functions, arrays, objects, async/await, fetch. This is the single most important step. Shopify development is deeply JavaScript.</div>
+        <span class="step-time">⏱ 4–6 weeks</span>
+      </div>
+      <div class="roadmap-step" data-num="2" onclick="toggleStep(this)">
+        <div class="step-title">Learn Node.js fundamentals</div>
+        <div class="step-desc">How servers work, HTTP requests, Express.js framework, environment variables, NPM packages. Build a simple API.</div>
+        <span class="step-time">⏱ 2–3 weeks</span>
+      </div>
+      <div class="roadmap-step" data-num="3" onclick="toggleStep(this)">
+        <div class="step-title">Learn React basics</div>
+        <div class="step-desc">Components, props, state, hooks (useState, useEffect). You know HTML — React will feel familiar quickly. Build a small UI project.</div>
+        <span class="step-time">⏱ 3–4 weeks</span>
+      </div>
+      <div class="roadmap-step" data-num="4" onclick="toggleStep(this)">
+        <div class="step-title">Set up a Shopify Partner account</div>
+        <div class="step-desc">Free account at partners.shopify.com. This lets you create development stores (fake stores) to test your apps on, without needing real products or payments.</div>
+        <span class="step-time">⏱ 30 minutes</span>
+      </div>
+      <div class="roadmap-step" data-num="5" onclick="toggleStep(this)">
+        <div class="step-title">Run your first app with Shopify CLI</div>
+        <div class="step-desc">Use `shopify app init` to generate a starter app, connect it to your dev store, and run it locally. You'll see a live embedded app inside Shopify Admin.</div>
+        <span class="step-time">⏱ 1–2 days</span>
+      </div>
+      <div class="roadmap-step" data-num="6" onclick="toggleStep(this)">
+        <div class="step-title">Make API calls to Shopify</div>
+        <div class="step-desc">Fetch real store data (products, orders) using the Admin API. Learn how GraphQL queries work — Shopify has a great GraphQL explorer.</div>
+        <span class="step-time">⏱ 1–2 weeks</span>
+      </div>
+      <div class="roadmap-step" data-num="7" onclick="toggleStep(this)">
+        <div class="step-title">Build & deploy a real app</div>
+        <div class="step-desc">Build something useful: a product label app, order export tool, custom discount app. Deploy to Render or Fly.io. Submit to the App Store or sell on Upwork.</div>
+        <span class="step-time">⏱ 2–4 weeks</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: CHECKLIST -->
+  <div class="section" id="section-checklist">
+    <div class="section-title">First App Setup Checklist</div>
+    <p class="section-sub">Click each item to check it off as you do it. This gets your first app running on your machine.</p>
+
+    <div class="card" style="--accent: var(--green)">
+      <ul class="checklist" id="checklist">
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Install Node.js (nodejs.org) — choose the LTS version</li>
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Install a code editor — VS Code is the standard choice (free)</li>
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Create a free Shopify Partner account at partners.shopify.com</li>
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Create a development store from your Partner dashboard</li>
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Install Shopify CLI: <code style="color:var(--green)">npm install -g @shopify/cli</code></li>
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Run <code style="color:var(--green)">shopify app init</code> and follow the prompts</li>
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Connect your new app to your development store when prompted</li>
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Run <code style="color:var(--green)">shopify app dev</code> to start the local server</li>
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Open your dev store's admin and see your embedded app appear 🎉</li>
+        <li onclick="toggleCheck(this)"><div class="check-box">✓</div>Read one file in the generated project (start with <code style="color:var(--green)">app/routes/app._index.jsx</code>)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SECTION: CODE -->
+  <div class="section" id="section-code">
+    <div class="section-title">Your First Real Code</div>
+    <p class="section-sub">Here's what a simple Shopify app page looks like — annotated for beginners. This fetches and displays a store's products.</p>
+
+    <div class="card" style="--accent: var(--blue)">
+      <div class="card-header">
+        <div class="icon" style="background:rgba(58,184,255,0.12)">📦</div>
+        <div><div class="card-title">Fetch & display products</div><div class="card-num">app/routes/app._index.jsx</div></div>
+      </div>
+      <div class="card-body">
+        <div class="code-block"><span class="comment">// 1. Import Shopify tools and React components</span>
+<span class="keyword">import</span> { useLoaderData } <span class="keyword">from</span> <span class="string">"@remix-run/react"</span>;
+<span class="keyword">import</span> { Page, Card, DataTable } <span class="keyword">from</span> <span class="string">"@shopify/polaris"</span>;
+<span class="keyword">import</span> { authenticate } <span class="keyword">from</span> <span class="string">"../shopify.server"</span>;
+
+<span class="comment">// 2. loader() runs on the server — fetches data before the page loads</span>
+<span class="keyword">export const</span> <span class="fn">loader</span> = <span class="keyword">async</span> ({ request }) => {
+  <span class="comment">// Authenticate the merchant making the request</span>
+  <span class="keyword">const</span> { admin } = <span class="keyword">await</span> <span class="fn">authenticate</span>.admin(request);
+
+  <span class="comment">// Ask Shopify for the first 10 products (GraphQL query)</span>
+  <span class="keyword">const</span> response = <span class="keyword">await</span> admin.graphql(`
+    query {
+      products(first: 10) {
+        edges {
+          node { id title status }
+        }
+      }
+    }
+  `);
+
+  <span class="keyword">const</span> { data } = <span class="keyword">await</span> response.json();
+  <span class="keyword">return</span> data.products.edges;
+};
+
+<span class="comment">// 3. The page component — receives loaded data as a prop</span>
+<span class="keyword">export default function</span> <span class="fn">Index</span>() {
+  <span class="keyword">const</span> products = <span class="fn">useLoaderData</span>();
+
+  <span class="keyword">return</span> (
+    <span class="comment">// Page and Card are Polaris components — no CSS needed!</span>
+    &lt;Page title=<span class="string">"My Products"</span>&gt;
+      &lt;Card&gt;
+        &lt;DataTable
+          columnContentTypes={[<span class="string">'text'</span>, <span class="string">'text'</span>]}
+          headings={[<span class="string">'Product'</span>, <span class="string">'Status'</span>]}
+          rows={products.<span class="fn">map</span>(({ node }) => [node.title, node.status])}
+        /&gt;
+      &lt;/Card&gt;
+    &lt;/Page&gt;
+  );
+}</div>
+      </div>
+    </div>
+
+    <div class="highlight">
+      <strong>What's happening here?</strong> The <code>loader</code> function runs on your server, authenticates the merchant, calls Shopify's API to get products, then passes the data to your React page component which renders it in a nice table — all with Polaris components you didn't have to style yourself.
+    </div>
+  </div>
+
+  <!-- SECTION: GLOSSARY -->
+  <div class="section" id="section-glossary">
+    <div class="section-title">Glossary</div>
+    <p class="section-sub">Click any term to expand its definition. Bookmark this as your reference.</p>
+
+    <div class="card" style="--accent: var(--purple)">
+      <div id="glossary-list">
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">API</div><div class="g-def">Application Programming Interface. A set of rules that lets your app communicate with Shopify's servers. When your app asks "give me all orders", it's making an API call.</div></div>
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">OAuth</div><div class="g-def">A security protocol for granting access. When a merchant installs your app, OAuth handles the permission dance — "do you allow this app to read your orders?" — without sharing passwords.</div></div>
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">GraphQL</div><div class="g-def">Shopify's preferred API style. Instead of getting all data, you ask for exactly what you need. Like ordering a custom burger vs getting a set meal.</div></div>
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">Webhook</div><div class="g-def">A push notification from Shopify to your app. When a new order is placed, Shopify sends a webhook to your server so you can react in real time.</div></div>
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">App Bridge</div><div class="g-def">Shopify's JavaScript library that lets your app communicate with the Shopify Admin UI — things like navigation, toast messages, modals that feel native to Shopify.</div></div>
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">Polaris</div><div class="g-def">Shopify's open-source React component library. Pre-built UI elements (buttons, cards, tables) that match Shopify's design. You use these to build your admin app's interface.</div></div>
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">Remix</div><div class="g-def">A full-stack React framework that Shopify's CLI uses by default. It handles routing, server logic, and data loading in a clean, modern way. You'll get comfortable with it as you go.</div></div>
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">Liquid</div><div class="g-def">Shopify's templating language for storefronts. If you want to modify what shoppers see (not just the admin), you'll use Liquid. It looks like HTML with extra tags like {% for %} and {{ variable }}.</div></div>
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">Shopify Partner</div><div class="g-def">A free account for developers and agencies who build on Shopify. Gives you access to development stores, the app submission process, and revenue sharing if you publish apps.</div></div>
+        <div class="glossary-item"><div class="g-term" onclick="toggleGlossary(this)">Access Scopes</div><div class="g-def">Permissions your app requests. Like phone app permissions — you declare upfront "I need read_products and write_orders", and merchants see exactly what your app can touch.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Built for your learning journey · Shopify App Dev Guide · Topics covered: 7</div>
+</div>
+
+<script>
+  const sections = ['overview','concepts','tools','roadmap','checklist','code','glossary'];
+  const completedSections = new Set();
+
+  function showSection(id) {
+    sections.forEach(s => {
+      document.getElementById('section-' + s).classList.remove('active');
+    });
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    event.target.classList.add('active');
+    completedSections.add(id);
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const pct = (completedSections.size / sections.length) * 100;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = completedSections.size + ' / ' + sections.length + ' topics done';
+  }
+
+  function toggleStep(el) {
+    el.classList.toggle('done');
+  }
+
+  function toggleCheck(li) {
+    li.classList.toggle('checked');
+  }
+
+  function toggleGlossary(term) {
+    term.classList.toggle('open');
+    const def = term.nextElementSibling;
+    def.classList.toggle('open');
+  }
+
+  // Mark overview as visited on load
+  completedSections.add('overview');
+  updateProgress();
+</script>
+</body>
+</html>
